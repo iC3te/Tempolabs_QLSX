@@ -21,7 +21,7 @@ jobs:
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/tempolas_qlsx:latest .
+        run: docker build -t ghcr.io/ic3te/tempolas_qlsx:latest .
 
       - name: Push Docker image to GHCR
-        run: docker push ghcr.io/${{ github.repository_owner }}/tempolabs_qlsx:latest
+        run: docker push ghcr.io/ic3te/tempolabs_qlsx:latest
