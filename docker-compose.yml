@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=qlsx
+      - DB_USER=qlsx
+      - DB_PASSWORD=tamanheec
+      - PORT=3000
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=qlsx
+      - POSTGRES_PASSWORD=tamanheec
+      - POSTGRES_DB=qlsx
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

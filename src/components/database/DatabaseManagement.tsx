@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from "react";
-// Create a mock Supabase client for demonstration purposes
-const mockSupabase = {
-  rpc: async () => ({ data: null, error: null }),
-  from: () => ({
-    select: () => ({
-      limit: () => ({ data: null, error: null }),
-    }),
-  }),
+import DatabaseConnectionTest from "./DatabaseConnectionTest";
+// Create a mock database client for demonstration purposes
+const mockDatabase = {
+  query: async () => ({ rows: [], rowCount: 0 }),
 };
 import {
   Card,
@@ -159,9 +155,11 @@ const DatabaseManagement = () => {
     setError(null);
 
     try {
-      // In a real implementation, you would fetch this from Supabase
+      // In a real implementation, you would fetch this from PostgreSQL
       // This is a mock implementation for demonstration purposes
-      const { data, error } = await mockSupabase.rpc("get_tables_info");
+      const { rows } = await mockDatabase.query(
+        "SELECT * FROM information_schema.tables WHERE table_schema = 'public'",
+      );
 
       if (error) throw error;
 
@@ -371,12 +369,11 @@ const DatabaseManagement = () => {
     setError(null);
 
     try {
-      // In a real implementation, you would fetch this from Supabase
+      // In a real implementation, you would fetch this from PostgreSQL
       // This is a mock implementation for demonstration purposes
-      const { data, error } = await mockSupabase
-        .from(tableName)
-        .select("*")
-        .limit(100);
+      const { rows } = await mockDatabase.query(
+        `SELECT * FROM ${tableName} LIMIT 100`,
+      );
 
       if (error) throw error;
 
@@ -432,11 +429,9 @@ const DatabaseManagement = () => {
     const startTime = performance.now();
 
     try {
-      // In a real implementation, you would execute this via Supabase
+      // In a real implementation, you would execute this via PostgreSQL
       // This is a mock implementation for demonstration purposes
-      const { data, error } = await mockSupabase.rpc("execute_sql", {
-        query: sqlQuery,
-      });
+      const { rows } = await mockDatabase.query(sqlQuery);
 
       if (error) throw error;
 
@@ -523,6 +518,10 @@ const DatabaseManagement = () => {
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
+      {/* Database Connection Test Card */}
+      <div className="mb-6">
+        <DatabaseConnectionTest />
+      </div>
       <div className="flex flex-col space-y-6">
         {/* Header with title and actions */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
