@@ -379,6 +379,10 @@ const ProductionOrderTracking = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrint}>
+              <Printer className="mr-2 h-4 w-4" />
+              In phiếu
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -398,7 +402,7 @@ const ProductionOrderTracking = () => {
               />
               Cập nhật dữ liệu
             </Button>
-            <Button>
+            <Button onClick={() => navigate("/production?showOrderForm=true")}>
               <FileText className="mr-2 h-4 w-4" />
               Tạo lệnh mới
             </Button>
@@ -473,24 +477,6 @@ const ProductionOrderTracking = () => {
                   )}
                 </div>
               </div>
-
-              <div className="flex-1 md:flex-initial">
-                <Select
-                  value={orderStatus}
-                  onValueChange={setOrderStatus}
-                  disabled={!currentOrder}
-                >
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Tình trạng" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="in-progress">Đang sản xuất</SelectItem>
-                    <SelectItem value="completed">Đã hoàn thành</SelectItem>
-                    <SelectItem value="delayed">Trì hoãn</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <Button onClick={handleSearch} disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -502,24 +488,60 @@ const ProductionOrderTracking = () => {
                 )}
               </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            {orderStatus === "delayed" && currentOrder && (
-              <div className="mt-4 p-4 border border-red-200 bg-red-50 rounded-md">
+        {/* Tình trạng lệnh sản xuất */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tình trạng lệnh sản xuất</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div>
                 <Label
-                  htmlFor="delay-reason"
-                  className="text-red-800 font-medium"
+                  htmlFor="order-status"
+                  className="text-sm font-medium mb-2 block"
                 >
-                  Lý do trì hoãn
+                  Tình trạng
                 </Label>
-                <Textarea
-                  id="delay-reason"
-                  placeholder="Nhập lý do trì hoãn lệnh sản xuất..."
-                  className="mt-2 border-red-200"
-                  value={delayReason}
-                  onChange={(e) => setDelayReason(e.target.value)}
-                />
+                <Select
+                  value={orderStatus}
+                  onValueChange={setOrderStatus}
+                  disabled={!currentOrder}
+                >
+                  <SelectTrigger
+                    id="order-status"
+                    className="w-full md:w-[250px]"
+                  >
+                    <SelectValue placeholder="Chọn tình trạng" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in-progress">Đang sản xuất</SelectItem>
+                    <SelectItem value="completed">Đã hoàn thành</SelectItem>
+                    <SelectItem value="delayed">Trì hoãn</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+
+              {orderStatus === "delayed" && currentOrder && (
+                <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+                  <Label
+                    htmlFor="delay-reason"
+                    className="text-red-800 font-medium"
+                  >
+                    Lý do trì hoãn
+                  </Label>
+                  <Textarea
+                    id="delay-reason"
+                    placeholder="Nhập lý do trì hoãn lệnh sản xuất..."
+                    className="mt-2 border-red-200"
+                    value={delayReason}
+                    onChange={(e) => setDelayReason(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -945,14 +967,6 @@ const ProductionOrderTracking = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Action buttons for the form */}
-            <div className="mt-4 flex justify-end space-x-2 print:hidden">
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                In phiếu
-              </Button>
-            </div>
 
             {/* Print styles */}
             <style jsx global>{`

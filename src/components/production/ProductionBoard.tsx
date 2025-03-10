@@ -582,12 +582,20 @@ const ProductionBoard = ({
     }
   };
 
-  // Check for URL parameters that might indicate an order update
+  // Check for URL parameters that might indicate an order update or show order form
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const updatedOrderNumber = params.get("updated");
     const newStatus = params.get("status");
     const reason = params.get("reason");
+    const showForm = params.get("showOrderForm");
+
+    if (showForm === "true") {
+      // Show the order form if requested
+      setShowOrderForm(true);
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     if (updatedOrderNumber && newStatus) {
       // Find the order and update its status

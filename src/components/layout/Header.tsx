@@ -1,8 +1,9 @@
 import React from "react";
-import { Bell, Settings, Search, Menu } from "lucide-react";
+import { Bell, Settings, Search, Menu, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,11 +43,18 @@ const Header = ({
       </div>
 
       <div className="flex items-center gap-4">
+        <Link to="/">
+          <Button variant="ghost" size="sm" className="hidden md:flex">
+            <Home className="mr-2 h-4 w-4" />
+            Trang chủ
+          </Button>
+        </Link>
+
         <div className="relative hidden md:flex">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Search..."
+            placeholder="Tìm kiếm..."
             className="rounded-md border border-input bg-background pl-8 pr-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-[200px] lg:w-[300px]"
           />
         </div>
@@ -66,14 +74,14 @@ const Header = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>New order received</DropdownMenuItem>
-            <DropdownMenuItem>Low inventory alert</DropdownMenuItem>
-            <DropdownMenuItem>Maintenance scheduled</DropdownMenuItem>
+            <DropdownMenuItem>Đơn hàng mới</DropdownMenuItem>
+            <DropdownMenuItem>Cảnh báo tồn kho thấp</DropdownMenuItem>
+            <DropdownMenuItem>Lịch bảo trì đã lên</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="justify-center text-sm font-medium">
-              View all
+              Xem tất cả
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -106,12 +114,12 @@ const Header = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem>Hồ sơ</DropdownMenuItem>
+            <DropdownMenuItem>Cài đặt</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

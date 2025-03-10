@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
+import Layout from "./components/layout/Layout";
 import routes from "tempo-routes";
 
 // Lazy load components for better performance
@@ -13,8 +14,17 @@ const ProductionOrderTracking = lazy(
 const ProductionBoard = lazy(
   () => import("./components/production/ProductionBoard"),
 );
+const ProductionLog = lazy(
+  () => import("./components/production/ProductionLog"),
+);
 const InventoryDashboard = lazy(
   () => import("./components/inventory/InventoryDashboard"),
+);
+const PersonnelList = lazy(
+  () => import("./components/personnel/PersonnelList"),
+);
+const AttendanceSheet = lazy(
+  () => import("./components/personnel/AttendanceSheet"),
 );
 
 function App() {
@@ -22,14 +32,19 @@ function App() {
     <Suspense fallback={<p>Loading...</p>}>
       <>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/database" element={<DatabaseManagement />} />
-          <Route
-            path="/production-tracking"
-            element={<ProductionOrderTracking />}
-          />
-          <Route path="/production" element={<ProductionBoard />} />
-          <Route path="/inventory" element={<InventoryDashboard />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="database" element={<DatabaseManagement />} />
+            <Route
+              path="production-tracking"
+              element={<ProductionOrderTracking />}
+            />
+            <Route path="production" element={<ProductionBoard />} />
+            <Route path="production-log" element={<ProductionLog />} />
+            <Route path="inventory" element={<InventoryDashboard />} />
+            <Route path="personnel/list" element={<PersonnelList />} />
+            <Route path="personnel/attendance" element={<AttendanceSheet />} />
+          </Route>
         </Routes>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
       </>
