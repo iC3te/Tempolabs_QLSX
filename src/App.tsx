@@ -26,6 +26,9 @@ const PersonnelList = lazy(
 const AttendanceSheet = lazy(
   () => import("./components/personnel/AttendanceSheet"),
 );
+const MoldManagement = lazy(
+  () => import("./components/inventory/MoldManagement"),
+);
 
 function App() {
   return (
@@ -42,6 +45,7 @@ function App() {
             <Route path="production" element={<ProductionBoard />} />
             <Route path="production-log" element={<ProductionLog />} />
             <Route path="inventory" element={<InventoryDashboard />} />
+            <Route path="molds" element={<MoldManagement />} />
             <Route path="personnel/list" element={<PersonnelList />} />
             <Route path="personnel/attendance" element={<AttendanceSheet />} />
           </Route>

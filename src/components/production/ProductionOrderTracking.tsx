@@ -31,6 +31,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Search,
   FileText,
   Printer,
@@ -38,6 +43,7 @@ import {
   RefreshCw,
   Calendar,
   AlertCircle,
+  Save,
 } from "lucide-react";
 
 interface ProductionOrderData {
@@ -57,6 +63,7 @@ interface ProductionOrderData {
   signature: string;
   productionRecords: ProductionRecord[];
   materialRecords: MaterialRecord[];
+  moldDetails?: MoldData;
 }
 
 interface ProductionRecord {
@@ -80,6 +87,121 @@ interface MaterialRecord {
   receivedBy: string;
 }
 
+interface MoldData {
+  ma_so_khuon: string;
+  ten_khuon: string;
+  vi_tri_khuon: string;
+  so_chi_tiet: string;
+  m_sp: string;
+  m_duoi: string;
+  loi_khuon: string;
+  kich_thuoc_khuon: string;
+}
+
+// Mock mold data
+const mockMolds: MoldData[] = [
+  {
+    ma_so_khuon: "KH-A102",
+    ten_khuon: "Vỏ điện thoại Model A",
+    vi_tri_khuon: "Trung tâm",
+    so_chi_tiet: "1",
+    m_sp: "120",
+    m_duoi: "2.5",
+    loi_khuon: "Vết cháy ở góc dưới",
+    kich_thuoc_khuon: "250x150x50",
+  },
+  {
+    ma_so_khuon: "KH-B205",
+    ten_khuon: "Hộp đựng thực phẩm",
+    vi_tri_khuon: "Bên phải",
+    so_chi_tiet: "1",
+    m_sp: "200",
+    m_duoi: "3.2",
+    loi_khuon: "Vết nứt ở mép",
+    kich_thuoc_khuon: "300x200x70",
+  },
+  {
+    ma_so_khuon: "KH-C301",
+    ten_khuon: "Nắp chai nước",
+    vi_tri_khuon: "Trung tâm",
+    so_chi_tiet: "4",
+    m_sp: "80",
+    m_duoi: "1.8",
+    loi_khuon: "Không đồng đều",
+    kich_thuoc_khuon: "150x150x30",
+  },
+  {
+    ma_so_khuon: "KH-D405",
+    ten_khuon: "Khay nhựa đựng linh kiện",
+    vi_tri_khuon: "Bên trái",
+    so_chi_tiet: "1",
+    m_sp: "250",
+    m_duoi: "4.0",
+    loi_khuon: "Biến dạng khi nhiệt độ cao",
+    kich_thuoc_khuon: "400x300x50",
+  },
+  {
+    ma_so_khuon: "KH-E501",
+    ten_khuon: "Vỏ máy tính",
+    vi_tri_khuon: "Trung tâm",
+    so_chi_tiet: "2",
+    m_sp: "500",
+    m_duoi: "8.5",
+    loi_khuon: "Vết lõm ở mặt trước",
+    kich_thuoc_khuon: "450x350x150",
+  },
+  {
+    ma_so_khuon: "KH-F602",
+    ten_khuon: "Tay cầm điều khiển",
+    vi_tri_khuon: "Bên phải",
+    so_chi_tiet: "1",
+    m_sp: "180",
+    m_duoi: "3.0",
+    loi_khuon: "Vết ráp không đều",
+    kich_thuoc_khuon: "200x150x60",
+  },
+  {
+    ma_so_khuon: "KH-G703",
+    ten_khuon: "Hộp đựng bút",
+    vi_tri_khuon: "Bên trái",
+    so_chi_tiet: "1",
+    m_sp: "100",
+    m_duoi: "2.0",
+    loi_khuon: "Vết xước bề mặt",
+    kich_thuoc_khuon: "220x80x30",
+  },
+  {
+    ma_so_khuon: "KH-H804",
+    ten_khuon: "Vỏ đồng hồ",
+    vi_tri_khuon: "Trung tâm",
+    so_chi_tiet: "1",
+    m_sp: "50",
+    m_duoi: "1.2",
+    loi_khuon: "Độ bóng không đều",
+    kich_thuoc_khuon: "100x100x20",
+  },
+  {
+    ma_so_khuon: "KH-I905",
+    ten_khuon: "Khay đá tủ lạnh",
+    vi_tri_khuon: "Bên phải",
+    so_chi_tiet: "12",
+    m_sp: "300",
+    m_duoi: "5.0",
+    loi_khuon: "Biến dạng khi nhiệt độ thấp",
+    kich_thuoc_khuon: "350x250x40",
+  },
+  {
+    ma_so_khuon: "KH-J106",
+    ten_khuon: "Vỏ quạt điện",
+    vi_tri_khuon: "Bên trái",
+    so_chi_tiet: "3",
+    m_sp: "400",
+    m_duoi: "6.5",
+    loi_khuon: "Vết cháy ở cạnh",
+    kich_thuoc_khuon: "500x500x100",
+  },
+];
+
 const ProductionOrderTracking = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -94,6 +216,13 @@ const ProductionOrderTracking = () => {
   const [orderStatus, setOrderStatus] = useState<string>("in-progress");
   const [delayReason, setDelayReason] = useState<string>("");
   const searchRef = useRef<HTMLDivElement>(null);
+  const [moldSearchTerm, setMoldSearchTerm] = useState("");
+  const [showMoldSuggestions, setShowMoldSuggestions] = useState(false);
+  const [filteredMolds, setFilteredMolds] = useState<MoldData[]>([]);
+  const moldSearchRef = useRef<HTMLDivElement>(null);
+  const [productionRows, setProductionRows] = useState<ProductionRecord[]>([]);
+  const [emptyRowsCount, setEmptyRowsCount] = useState(3);
+  const [savedRows, setSavedRows] = useState<ProductionRecord[]>([]);
 
   // Extract orderNumber from URL query parameters if present
   useEffect(() => {
@@ -319,12 +448,60 @@ const ProductionOrderTracking = () => {
       ) {
         setShowSuggestions(false);
       }
+
+      if (
+        moldSearchRef.current &&
+        !moldSearchRef.current.contains(event.target as Node)
+      ) {
+        setShowMoldSuggestions(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Filter molds based on search input
+  useEffect(() => {
+    if (moldSearchTerm.length > 0) {
+      const filtered = mockMolds.filter(
+        (mold) =>
+          mold.ten_khuon.toLowerCase().includes(moldSearchTerm.toLowerCase()) ||
+          mold.ma_so_khuon.toLowerCase().includes(moldSearchTerm.toLowerCase()),
+      );
+      setFilteredMolds(filtered);
+      setShowMoldSuggestions(true);
+    } else {
+      setShowMoldSuggestions(false);
+    }
+  }, [moldSearchTerm]);
+
+  // Initialize empty production rows
+  useEffect(() => {
+    if (currentOrder) {
+      // Initialize with existing records or empty rows
+      const initialRows =
+        currentOrder.productionRecords.length > 0
+          ? [...currentOrder.productionRecords]
+          : Array(emptyRowsCount)
+              .fill(null)
+              .map(() => ({
+                date: "",
+                startTime: "",
+                endTime: "",
+                startCounter: "",
+                endCounter: "",
+                quantity: "",
+                notes: "",
+                operator: "",
+                supervisor: "",
+              }));
+
+      setProductionRows(initialRows);
+      setSavedRows(currentOrder.productionRecords);
+    }
+  }, [currentOrder]);
 
   const handleSearch = () => {
     if (searchOrderNumber) {
@@ -337,6 +514,73 @@ const ProductionOrderTracking = () => {
     setSearchOrderNumber(orderNumber);
     fetchOrderData(orderNumber);
     setShowSuggestions(false);
+  };
+
+  const handleSelectMold = (mold: MoldData) => {
+    if (currentOrder) {
+      // Update current order with mold data
+      const updatedOrder = {
+        ...currentOrder,
+        moldId: mold.ma_so_khuon,
+        moldPosition: mold.vi_tri_khuon,
+        productName: mold.ten_khuon,
+        tailWeight: mold.m_duoi,
+        totalPlasticWeight: mold.m_sp,
+        moldDetails: mold,
+      };
+      setCurrentOrder(updatedOrder);
+      setMoldSearchTerm(mold.ten_khuon);
+    }
+    setShowMoldSuggestions(false);
+  };
+
+  const handleProductionRowChange = (
+    index: number,
+    field: keyof ProductionRecord,
+    value: string,
+  ) => {
+    const updatedRows = [...productionRows];
+    updatedRows[index] = {
+      ...updatedRows[index],
+      [field]: value,
+    };
+    setProductionRows(updatedRows);
+  };
+
+  const handleSaveProductionRow = (index: number) => {
+    // Add the row to saved rows
+    const rowToSave = productionRows[index];
+    setSavedRows([...savedRows, rowToSave]);
+
+    // Update the current order's production records
+    if (currentOrder) {
+      const updatedOrder = {
+        ...currentOrder,
+        productionRecords: [...savedRows, rowToSave],
+      };
+      setCurrentOrder(updatedOrder);
+    }
+
+    // If all rows are filled, add a new empty row
+    const filledRowsCount = productionRows.filter(
+      (row) => row.date && row.startTime && row.endTime && row.quantity,
+    ).length;
+
+    if (filledRowsCount >= emptyRowsCount) {
+      const newEmptyRow = {
+        date: "",
+        startTime: "",
+        endTime: "",
+        startCounter: "",
+        endCounter: "",
+        quantity: "",
+        notes: "",
+        operator: "",
+        supervisor: "",
+      };
+      setProductionRows([...productionRows, newEmptyRow]);
+      setEmptyRowsCount(emptyRowsCount + 1);
+    }
   };
 
   const handlePrint = () => {
@@ -409,141 +653,143 @@ const ProductionOrderTracking = () => {
           </div>
         </div>
 
-        {/* Search Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tra cứu lệnh sản xuất</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1" ref={searchRef}>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Nhập số lệnh sản xuất..."
-                    className="pl-8"
-                    value={searchOrderNumber}
-                    onChange={(e) => setSearchOrderNumber(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    onFocus={() =>
-                      searchOrderNumber.length > 0 && setShowSuggestions(true)
-                    }
-                  />
-                  {showSuggestions && filteredOrders.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredOrders.map((orderNum) => {
-                        const order = mockOrders[orderNum];
-                        let statusText = "";
-                        let statusClass = "";
+        {/* Search Section and Status in one row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tra cứu lệnh sản xuất</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1" ref={searchRef}>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Nhập số lệnh sản xuất..."
+                      className="pl-8"
+                      value={searchOrderNumber}
+                      onChange={(e) => setSearchOrderNumber(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      onFocus={() =>
+                        searchOrderNumber.length > 0 && setShowSuggestions(true)
+                      }
+                    />
+                    {showSuggestions && filteredOrders.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {filteredOrders.map((orderNum) => {
+                          const order = mockOrders[orderNum];
+                          let statusText = "";
+                          let statusClass = "";
 
-                        // Determine status for display
-                        if (orderNum.includes("LSX-2023-003")) {
-                          statusText = "Hoàn thành";
-                          statusClass = "bg-green-100 text-green-800";
-                        } else if (orderNum.includes("LSX-2023-004")) {
-                          statusText = "Trì hoãn";
-                          statusClass = "bg-red-100 text-red-800";
-                        } else if (orderNum.includes("LSX-2023-001")) {
-                          statusText = "Đang SX";
-                          statusClass = "bg-blue-100 text-blue-800";
-                        } else {
-                          statusText = "Chờ xử lý";
-                          statusClass = "bg-amber-100 text-amber-800";
-                        }
+                          // Determine status for display
+                          if (orderNum.includes("LSX-2023-003")) {
+                            statusText = "Hoàn thành";
+                            statusClass = "bg-green-100 text-green-800";
+                          } else if (orderNum.includes("LSX-2023-004")) {
+                            statusText = "Trì hoãn";
+                            statusClass = "bg-red-100 text-red-800";
+                          } else if (orderNum.includes("LSX-2023-001")) {
+                            statusText = "Đang SX";
+                            statusClass = "bg-blue-100 text-blue-800";
+                          } else {
+                            statusText = "Chờ xử lý";
+                            statusClass = "bg-amber-100 text-amber-800";
+                          }
 
-                        return (
-                          <div
-                            key={orderNum}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                            onClick={() => handleSelectOrder(orderNum)}
-                          >
-                            <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                            <div className="flex-1">
-                              <div className="font-medium">{orderNum}</div>
-                              <div className="text-xs text-gray-500">
-                                {order.productName}
-                              </div>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`ml-2 ${statusClass}`}
+                          return (
+                            <div
+                              key={orderNum}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                              onClick={() => handleSelectOrder(orderNum)}
                             >
-                              {statusText}
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
+                              <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                              <div className="flex-1">
+                                <div className="font-medium">{orderNum}</div>
+                                <div className="text-xs text-gray-500">
+                                  {order.productName}
+                                </div>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={`ml-2 ${statusClass}`}
+                              >
+                                {statusText}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button onClick={handleSearch} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Đang tìm...
+                    </>
+                  ) : (
+                    "Tìm kiếm"
                   )}
-                </div>
+                </Button>
               </div>
-              <Button onClick={handleSearch} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Đang tìm...
-                  </>
-                ) : (
-                  "Tìm kiếm"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Tình trạng lệnh sản xuất */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tình trạng lệnh sản xuất</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              <div>
-                <Label
-                  htmlFor="order-status"
-                  className="text-sm font-medium mb-2 block"
-                >
-                  Tình trạng
-                </Label>
-                <Select
-                  value={orderStatus}
-                  onValueChange={setOrderStatus}
-                  disabled={!currentOrder}
-                >
-                  <SelectTrigger
-                    id="order-status"
-                    className="w-full md:w-[250px]"
-                  >
-                    <SelectValue placeholder="Chọn tình trạng" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="in-progress">Đang sản xuất</SelectItem>
-                    <SelectItem value="completed">Đã hoàn thành</SelectItem>
-                    <SelectItem value="delayed">Trì hoãn</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {orderStatus === "delayed" && currentOrder && (
-                <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+          {/* Tình trạng lệnh sản xuất */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tình trạng lệnh sản xuất</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                <div>
                   <Label
-                    htmlFor="delay-reason"
-                    className="text-red-800 font-medium"
+                    htmlFor="order-status"
+                    className="text-sm font-medium mb-2 block"
                   >
-                    Lý do trì hoãn
+                    Tình trạng
                   </Label>
-                  <Textarea
-                    id="delay-reason"
-                    placeholder="Nhập lý do trì hoãn lệnh sản xuất..."
-                    className="mt-2 border-red-200"
-                    value={delayReason}
-                    onChange={(e) => setDelayReason(e.target.value)}
-                  />
+                  <Select
+                    value={orderStatus}
+                    onValueChange={setOrderStatus}
+                    disabled={!currentOrder}
+                  >
+                    <SelectTrigger
+                      id="order-status"
+                      className="w-full md:w-[250px]"
+                    >
+                      <SelectValue placeholder="Chọn tình trạng" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="in-progress">Đang sản xuất</SelectItem>
+                      <SelectItem value="completed">Đã hoàn thành</SelectItem>
+                      <SelectItem value="delayed">Trì hoãn</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                {orderStatus === "delayed" && currentOrder && (
+                  <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+                    <Label
+                      htmlFor="delay-reason"
+                      className="text-red-800 font-medium"
+                    >
+                      Lý do trì hoãn
+                    </Label>
+                    <Textarea
+                      id="delay-reason"
+                      placeholder="Nhập lý do trì hoãn lệnh sản xuất..."
+                      className="mt-2 border-red-200"
+                      value={delayReason}
+                      onChange={(e) => setDelayReason(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Production Order Form */}
         {currentOrder ? (
@@ -556,10 +802,11 @@ const ProductionOrderTracking = () => {
                       <tr>
                         <td className="border-r-2 border-black p-4 print:border-r w-1/4">
                           <div className="text-center">
-                            <h2 className="font-bold text-xl">TÂM ANH</h2>
-                            <p className="text-sm">
-                              đồ chơi & thiết bị giáo dục
-                            </p>
+                            <img
+                              src="/logo-2.png"
+                              alt="Logo"
+                              className="h-16 mx-auto"
+                            />
                           </div>
                         </td>
                         <td className="p-4 text-center w-2/4">
@@ -573,14 +820,6 @@ const ProductionOrderTracking = () => {
                             <p className="bg-yellow-200 p-1">
                               {currentOrder.orderNumber}
                             </p>
-                            <p className="font-bold mt-2">Số lượng</p>
-                            <p className="p-1">
-                              {currentOrder.productionRecords.reduce(
-                                (sum, record) =>
-                                  sum + parseInt(record.quantity || "0"),
-                                0,
-                              )}
-                            </p>
                           </div>
                         </td>
                       </tr>
@@ -589,7 +828,14 @@ const ProductionOrderTracking = () => {
                 </div>
 
                 <div className="border-b-2 border-black print:border-b">
-                  <table className="w-full border-collapse">
+                  <table
+                    className="w-full border-collapse"
+                    style={{
+                      transform: "scale(0.6)",
+                      transformOrigin: "top left",
+                      width: "166.67%",
+                    }}
+                  >
                     <tbody>
                       <tr>
                         <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b w-1/6 font-bold">
@@ -640,10 +886,38 @@ const ProductionOrderTracking = () => {
                           Tên khuôn
                         </td>
                         <td
-                          className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b"
+                          className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b relative"
                           colSpan={3}
+                          ref={moldSearchRef}
                         >
-                          {currentOrder.productName}
+                          <Input
+                            value={moldSearchTerm || currentOrder.productName}
+                            onChange={(e) => setMoldSearchTerm(e.target.value)}
+                            onFocus={() =>
+                              moldSearchTerm.length > 0 &&
+                              setShowMoldSuggestions(true)
+                            }
+                            placeholder="Nhập tên khuôn..."
+                            className="border-none p-0 h-auto"
+                          />
+                          {showMoldSuggestions && filteredMolds.length > 0 && (
+                            <div className="absolute z-10 w-full left-0 mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                              {filteredMolds.map((mold) => (
+                                <div
+                                  key={mold.ma_so_khuon}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => handleSelectMold(mold)}
+                                >
+                                  <div className="font-medium">
+                                    {mold.ten_khuon}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {mold.ma_so_khuon}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b font-bold">
                           Mã nhựa
@@ -656,7 +930,9 @@ const ProductionOrderTracking = () => {
                         <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b font-bold">
                           Số chi tiết
                         </td>
-                        <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b"></td>
+                        <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b">
+                          {currentOrder.moldDetails?.so_chi_tiet || ""}
+                        </td>
                         <td className="border-r-2 border-b-2 border-black p-2 print:border-r print:border-b font-bold">
                           Màu
                         </td>
@@ -706,7 +982,9 @@ const ProductionOrderTracking = () => {
                         <td
                           className="border-r-2 border-black p-2 print:border-r"
                           colSpan={5}
-                        ></td>
+                        >
+                          {currentOrder.moldDetails?.loi_khuon || ""}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -714,7 +992,14 @@ const ProductionOrderTracking = () => {
 
                 {/* Production Records */}
                 <div className="border-b-2 border-black print:border-b">
-                  <table className="w-full border-collapse">
+                  <table
+                    className="w-full border-collapse"
+                    style={{
+                      transform: "scale(0.6)",
+                      transformOrigin: "top left",
+                      width: "166.67%",
+                    }}
+                  >
                     <thead>
                       <tr>
                         <th
@@ -784,66 +1069,208 @@ const ProductionOrderTracking = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {currentOrder.productionRecords.map((record, index) => (
-                        <tr key={index}>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center bg-green-50">
+                      {/* Saved rows (read-only) */}
+                      {savedRows.map((record, index) => (
+                        <tr key={`saved-${index}`} className="bg-gray-50">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center bg-green-50">
                             {record.date}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center bg-green-50">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center bg-green-50">
                             {record.startTime} đến {record.endTime}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
                             {record.startCounter}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
                             {record.endCounter}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
                             {record.quantity}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
                             0
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center"></td>
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r">
                             {record.notes}
                           </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center">
+                          <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
                             {record.operator}
                           </td>
-                          <td className="border-b-2 border-black p-2 print:border-b text-center">
+                          <td className="border-b-2 border-black p-1 print:border-b text-center">
                             {record.supervisor}
                           </td>
                         </tr>
                       ))}
-                      {/* Empty rows for future entries */}
-                      {Array.from({
-                        length: 15 - currentOrder.productionRecords.length,
-                      }).map((_, index) => (
-                        <tr key={`empty-${index}`}>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center bg-green-50">
-                            .../.../202...
-                          </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r text-center bg-green-50">
-                            ...g... đến ...g...
-                          </td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-r-2 border-black p-2 print:border-b print:border-r"></td>
-                          <td className="border-b-2 border-black p-2 print:border-b"></td>
-                        </tr>
-                      ))}
+
+                      {/* Editable rows */}
+                      {productionRows
+                        .filter((row) => !savedRows.includes(row))
+                        .map((row, index) => {
+                          const rowIndex = savedRows.length + index;
+                          return (
+                            <tr key={`editable-${index}`}>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center bg-green-50">
+                                <Input
+                                  type="date"
+                                  value={row.date}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "date",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center bg-green-50">
+                                <div className="flex items-center space-x-1">
+                                  <Input
+                                    type="time"
+                                    value={row.startTime}
+                                    onChange={(e) =>
+                                      handleProductionRowChange(
+                                        rowIndex,
+                                        "startTime",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="border-none p-0 h-6 text-center w-20"
+                                  />
+                                  <span>đến</span>
+                                  <Input
+                                    type="time"
+                                    value={row.endTime}
+                                    onChange={(e) =>
+                                      handleProductionRowChange(
+                                        rowIndex,
+                                        "endTime",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="border-none p-0 h-6 text-center w-20"
+                                  />
+                                </div>
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input
+                                  type="number"
+                                  value={row.startCounter}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "startCounter",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input
+                                  type="number"
+                                  value={row.endCounter}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "endCounter",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input
+                                  type="number"
+                                  value={row.quantity}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "quantity",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input
+                                  type="number"
+                                  defaultValue="0"
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input className="border-none p-0 h-6 text-center" />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r">
+                                <Input
+                                  value={row.notes}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "notes",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6"
+                                />
+                              </td>
+                              <td className="border-b-2 border-r-2 border-black p-1 print:border-b print:border-r text-center">
+                                <Input
+                                  value={row.operator}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "operator",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center"
+                                />
+                              </td>
+                              <td className="border-b-2 border-black p-1 print:border-b flex items-center justify-between">
+                                <Input
+                                  value={row.supervisor}
+                                  onChange={(e) =>
+                                    handleProductionRowChange(
+                                      rowIndex,
+                                      "supervisor",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="border-none p-0 h-6 text-center mr-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() =>
+                                    handleSaveProductionRow(rowIndex)
+                                  }
+                                >
+                                  <Save className="h-4 w-4 text-blue-600" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Material Records */}
                 <div>
-                  <table className="w-full border-collapse">
+                  <table
+                    className="w-full border-collapse"
+                    style={{
+                      transform: "scale(0.6)",
+                      transformOrigin: "top left",
+                      width: "166.67%",
+                    }}
+                  >
                     <thead>
                       <tr>
                         <th
